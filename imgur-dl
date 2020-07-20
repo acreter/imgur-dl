@@ -1,0 +1,31 @@
+#!/bin/sh
+
+imgur_dl_usage() {
+	printf "imgur-dl version 0.1\nUsage:\nimgur-dl <url>\n"
+	exit $1
+}
+
+imgur_dl_transform_url() {
+	[ -n "$1" ] || imgur_dl_usage 1
+	URL=$(echo $1 | sed 's/gallery/a/')
+	URL="${URL%#*}"
+	URL="$URL/embed?pub=true"
+	echo $URL
+}
+
+imgur_dl_bad_format() {
+	printf "Bad URL\n"
+	exit 1
+}
+
+URL=$(imgur_dl_transform_url $1)
+(echo "$URL" | grep -Eq  "https://imgur.com/a/[a-zA-Z0-9]+/embed\?pub=true") || imgur_dl_bad_format
+JSON=$(wget -q -O - "$URL" | grep 'var images')
+JSON="${JSON#*= }"
+JSON="${JSON%,*}"
+
+printf "getting %s images...\n" "$(echo $JSON | jq -r '.count')"
+for h in $(echo $JSON | jq -r '.images[].hash'); do
+	printf "%s\n" "$h.jpg"
+	wget -q "https://i.imgur.com/$h.jpg"
+done
