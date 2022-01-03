@@ -11,5 +11,3 @@ Dependencies
 
 - wget
 - [jq](https://stedolan.github.io/jq/)
-
-~ac
